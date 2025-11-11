@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Cyber Portal — Operative Console</title>
+<style>
+  /* ---- Reset & base ---- */
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#dff6ff;background:#05060a}
+  a{color:inherit}
+  button{font-family:inherit}
+
+  /* ---- decorative layers ---- */
+  canvas#rain, .bg-layer, .scan { position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .bg-layer{ background:
+    radial-gradient(900px 400px at 10% 10%, rgba(124,92,255,0.045), transparent),
+    linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.55));
+    mix-blend-mode:screen; z-index:0; }
+  .scan{ background-image: linear-gradient(rgba(255,255,255,0.01) 1px, rgba(0,0,0,0.99) 1px); background-size:100% 4px; opacity:0.05; animation:scan 6s linear infinite; z-index:0}
+  @keyframes scan{0%{transform:translateY(-10%)}100%{transform:translateY(10%)}}
+
+  /* ---- layout ---- */
+  .wrap{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+  .container{width:1100px;max-width:98%;display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+  @media (max-width:920px){.container{grid-template-columns:1fr;}}
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid rgba(124,92,255,0.05);box-shadow:0 12px 48px rgba(2,6,23,0.6)}
+
+  /* ---- left column: skull + terminal ---- */
+  .left{display:flex;flex-direction:column;gap:12px}
+  .skull-wrap{display:flex;align-items:center;justify-content:center;height:300px;border-radius:10px;background:linear-gradient(135deg, rgba(124,92,255,0.04), rgba(0,212,255,0.02));position:relative;overflow:hidden}
+  .skull { width:220px;height:220px; display:flex; align-items:center; justify-content:center; transform-style:preserve-3d; animation:skullSpin 12s linear infinite; filter:drop-shadow(0 20px 60px rgba(0,0,0,0.6)); }
+  @keyframes skullSpin{0%{transform:rotateX(6deg) rotateY(0)}50%{transform:rotateX(6deg) rotateY(180deg)}100%{transform:rotateX(6deg) rotateY(360deg)}}
+  .skull img { width:100%; height:100%; object-fit:contain; }
+
+  .terminal{background:rgba(0,0,0,0.6);color:#8ff7b2;padding:12px;border-radius:8px;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:13px;min-height:120px;line-height:1.45;position:relative; overflow:hidden}
+  .term-lines{white-space:pre-wrap}
+  .cursor{display:inline-block;width:10px;height:18px;background:#8ff7b2;margin-left:6px;vertical-align:middle;animation:blink 900ms steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---- right column: dashboard ---- */
+  .right{display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;gap:12px}
+  @media (max-width:920px){ .row{flex-direction:column} }
+  .card{flex:1;padding:12px;border-radius:10px;background:linear-gradient(90deg, rgba(0,0,0,0.12), rgba(2,6,23,0.2));border:1px solid rgba(255,255,255,0.02)}
+  .card h3{margin:0 0 8px 0;font-size:14px;color:#e9fbff}
+  .muted{color:rgba(230,242,255,0.75);font-size:13px}
+
+  /* countdown */
+  .countdown{font-weight:900;font-size:28px;letter-spacing:1px;color:#e6f3ff}
+  .end-note{color:rgba(230,242,255,0.72);font-size:13px}
+
+  /* progress / hack simulation */
+  .progress {height:16px;background:rgba(255,255,255,0.04);border-radius:10px;overflow:hidden}
+  .bar{height:100%;width:0%;background:linear-gradient(90deg,#7c5cff,#00d4ff);transition:width 600ms ease}
+
+  /* puzzle */
+  .puzzle{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .puzzle input{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+  .puzzle button{padding:10px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,#7c5cff,#00d4ff);color:#041226;font-weight:800}
+
+  /* glitch heading */
+  .glitch{position:relative;font-weight:900;font-size:20px;color:#e6f3ff}
+  .glitch::before, .glitch::after{content:attr(data-text);position:absolute;left:0;top:0;opacity:0.85}
+  .glitch::before{color:#7c5cff;mix-blend-mode:screen;transform:translate(2px,-2px);clip-path:rect(0,200px,60px,0);animation:gl1 2.6s infinite}
+  .glitch::after{color:#00d4ff;mix-blend-mode:screen;transform:translate(-2px,2px);clip-path:rect(60px,200px,200px,0);animation:gl2 3s infinite}
+  @keyframes gl1{0%{opacity:0.6}20%{opacity:1}40%{opacity:0.5}100%{opacity:0.8}}
+  @keyframes gl2{0%{opacity:0.5}30%{opacity:1}60%{opacity:0.4}100%{opacity:0.9}}
+
+  /* controls */
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn-min{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+  .btn-disabled{opacity:0.45;pointer-events:none}
+
+  /* small-screen tweaks */
+  @media (max-width:560px){
+    .skull-wrap{height:220px}
+    .skull{width:160px;height:160px}
+    .terminal{font-size:12px}
+    .countdown{font-size:22px}
+  }
+</style>
+</head>
+<body>
+  <!-- decorative layers -->
+  <canvas id="rain"></canvas>
+  <div class="bg-layer"></div>
+  <div class="scan" aria-hidden="true"></div>
+
+  <main class="wrap" role="main">
+    <section class="container" aria-label="Operative console">
+      <!-- LEFT -->
+      <div class="left panel">
+        <div class="skull-wrap">
+          <div class="skull">
+            <img id="skullImg" src="skull.png" alt="Cyber Skull">
+          </div>
+        </div>
+
+        <div class="terminal">
+          <div class="term-lines" id="term"></div>
+          <div style="margin-top:8px;color:rgba(230,242,255,0.65);font-size:12px">
+            <span id="typedCursor" class="cursor" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+          <div class="muted">Operative Console</div>
+          <div class="muted">Session: <strong id="sessionId">—</strong></div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right panel">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <div>
+            <div class="glitch" data-text="SYSTEM DASH">SYSTEM DASH</div>
+            <div class="muted" style="margin-top:6px">Overview & mission controls</div>
+          </div>
+          <div style="text-align:right">
+           
+            <div style="font-weight:800"></div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div class="card">
+            <h3></h3>
+            <div style="visibility:hidden;" id="countdown"></div>
+            <div class="countdown">IMAN IQBAL</div>
+            <div class="">A true warrior</div>
+            <div class="end-note" id="endNote"></div>
+          </div>
+
+          <div class="card">
+            <h3>Hack Progress</h3>
+            <div class="muted">Simulated process status (locked until puzzle solved)</div>
+            <div style="margin-top:8px" class="progress"><div class="bar" id="bar"></div></div>
+            <div style="margin-top:8px;font-size:13px;color:rgba(230,242,255,0.75)"><strong id="barPct">0%</strong> — infiltration sequence</div>
+            <div style="margin-top:10px" class="controls">
+              <button class="btn-min btn-disabled" id="runBtn">Run Simulation</button>
+              <button class="btn-min" id="resetBtn">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div class="card">
+            <h3>Decrypt Puzzle</h3>
+            <div class="muted">Who's better? CR or Iman?</div>
+            <div style="margin-top:8px" class="puzzle">
+              <input id="puzzleInput" placeholder="Type answer">
+              <button id="puzzleBtn">Submit</button>
+            </div>
+            <div style="margin-top:8px;color:#bfe6ff;font-size:13px" id="puzzleHint"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- AUDIO -->
+  <audio id="completionAudio" loop="true" src="goat.mp3" preload="auto"></audio>
+  
+
+<script>
+/* ---------- CONFIG ---------- */
+const TARGET=new Date('2026-11-12T07:30:00Z');
+
+/* ---------- Terminal ---------- */
+const term=document.getElementById('term');
+const typedCursor=document.getElementById('typedCursor');
+const sessionIdEl=document.getElementById('sessionId');
+const termLines=[
+"> Initializing secure connection...",
+"> Verifying token rings...",
+"> Scanning firewall layers...",
+"> Bouncing through nodes: 3 -> 7 -> 42",
+"> Root access: provisional",
+"> Preparing portal reveal..."
+];
+function makeSession(){return 'OP-'+Math.random().toString(36).slice(2,10).toUpperCase();}
+sessionIdEl.textContent=makeSession();
+async function typeLines(lines,speed=44){term.textContent='';for(let i=0;i<lines.length;i++){await typeText(lines[i]+"\n",speed);await sleep(200+Math.random()*500);}typedCursor.style.display='none';}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function typeText(txt,speed){return new Promise(resolve=>{let i=0;typedCursor.style.display='inline-block';function step(){if(i<txt.length){term.textContent+=txt[i++];setTimeout(step,speed+Math.random()*20);}else{resolve();}}step();});}
+typeLines(termLines);
+
+/* ---------- Countdown ---------- */
+const countdownEl=document.getElementById('countdown'), endNote=document.getElementById('endNote');
+function updateCountdown(){const now=new Date();let diff=Math.floor((TARGET-now)/1000);if(diff<=0){countdownEl.textContent="00:00:00:00";endNote.textContent="Countdown reached — portal unlocked.";clearInterval(cdInt);return;}
+const days=Math.floor(diff/86400); diff%=86400; const hours=Math.floor(diff/3600); diff%=3600; const mins=Math.floor(diff/60); const secs=diff%60; const fmt=n=>String(n).padStart(2,'0');
+countdownEl.textContent=`${fmt(days)}:${fmt(hours)}:${fmt(mins)}:${fmt(secs)}`;}
+updateCountdown();const cdInt=setInterval(updateCountdown,1000);
+
+/* ---------- Matrix Rain ---------- */
+(function(){const canvas=document.getElementById('rain');const ctx=canvas.getContext('2d',{alpha:true});
+function resize(){canvas.width=innerWidth;canvas.height=innerHeight;init();}
+window.addEventListener('resize',resize);
+let cols=[],fontSize=18;
+function init(){fontSize=Math.max(12,Math.floor(Math.min(innerWidth,innerHeight)/64)*2+12);ctx.font=fontSize+'px monospace';const count=Math.floor(innerWidth/fontSize);cols=Array.from({length:count},()=>Math.floor(Math.random()*innerHeight/fontSize));}
+const chars='ﾊﾐﾋｰｯｼﾘﾄｱｳﾝｲ1234567890ABCDEF@#$%&*()[]<>/{}';
+function frame(){ctx.fillStyle='rgba(0,0,0,0.12)';ctx.fillRect(0,0,canvas.width,canvas.height);for(let i=0;i<cols.length;i++){const x=i*fontSize;const y=cols[i]*fontSize;const ch=chars.charAt(Math.floor(Math.random()*chars.length));ctx.fillStyle=i%10===0?'rgba(124,92,255,0.95)':'rgba(0,212,255,0.9)';ctx.fillText(ch,x,y);if(y>canvas.height&&Math.random()>0.975)cols[i]=0;cols[i]++;}requestAnimationFrame(frame);}
+resize();frame();})();
+
+/* ---------- Progress bar ---------- */
+const bar=document.getElementById('bar'), barPct=document.getElementById('barPct');
+const runBtn=document.getElementById('runBtn'), resetBtn=document.getElementById('resetBtn');
+let barTimer=null;
+function setRunEnabled(enabled){if(enabled){runBtn.classList.remove('btn-disabled');runBtn.removeAttribute('aria-disabled');runBtn.disabled=false;}else{runBtn.classList.add('btn-disabled');runBtn.setAttribute('aria-disabled','true');runBtn.disabled=true;}}
+setRunEnabled(false);
+runBtn.addEventListener('click',()=>{if(barTimer)return;let pct=0; bar.style.width='0%'; barPct.textContent='0%'; barTimer=setInterval(()=>{pct+=Math.random()*12;if(pct>=100){pct=100;clearInterval(barTimer);barTimer=null;onBarComplete();}
+bar.style.width=pct.toFixed(1)+'%';barPct.textContent=Math.floor(pct)+'%';},450);});
+resetBtn.addEventListener('click',()=>{clearInterval(barTimer);barTimer=null;bar.style.width='0%';barPct.textContent='0%';});
+
+/* ---------- Puzzle ---------- */
+const puzzleBtn=document.getElementById('puzzleBtn'), puzzleInput=document.getElementById('puzzleInput'), puzzleHint=document.getElementById('puzzleHint');
+let puzzleSolvedFlag=false;
+puzzleBtn.addEventListener('click',()=>{const val=(puzzleInput.value||'').trim();if(!val){puzzleHint.textContent='Type your answer then press Submit.';return;}
+if(val==='Iman'||val==='iman'){puzzleHint.textContent='✅ Correct — keyphrase accepted. Simulation enabled.';if(!puzzleSolvedFlag){puzzleSolvedFlag=true;setRunEnabled(true);runBtn.animate([{transform:'scale(1)'},{transform:'scale(1.04)'},{transform:'scale(1)'}],{duration:380}); appendTerm("> Decryption verified: keyphrase matches expected token.");}}
+else{puzzleHint.textContent='❌ Incorrect — try again.';puzzleInput.focus();}});
+
+/* ---------- Terminal helpers ---------- */
+function appendTerm(line){term.textContent+=line+"\n";}
+
+/* ---------- onBarComplete ---------- */
+function onBarComplete(){appendTerm("> Infiltration complete. Cleaning traces..."); bar.style.width='100%';barPct.textContent='100%';
+const audio=document.getElementById('completionAudio');if(audio){audio.play().catch(e=>console.warn("Audio play failed:",e));}
+const skull=document.getElementById('skullImg');if(skull){skull.animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:700,iterations:1});}}
+</script>
+</body>
+</html>
