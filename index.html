@@ -2,221 +2,208 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>☠️ Cyber Portal</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Cyber Portal — Mobile Friendly</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
-  /* === Reset & layout === */
+  /* reset */
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-  body{background:#06060a;overflow:hidden;color:#dbeafe}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Roboto,Arial;background:#06060a;color:#e6f3ff;-webkit-font-smoothing:antialiased}
+  /* keep decorative layers non-interactive */
+  canvas, .bg-overlay, .scan { position:fixed; inset:0; z-index:0; pointer-events:none; }
 
-  /* === Matrix canvas background === */
-  #rain { position:fixed; inset:0; z-index:0; display:block; }
+  /* main container */
+  .wrap { position:relative; z-index:2; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:18px; }
 
-  /* === Scan + gradient overlay === */
-  .bg-overlay{
-    position:fixed; inset:0; z-index:1; pointer-events:none;
-    background:
-      radial-gradient(800px 400px at 10% 10%, rgba(124,92,255,0.05), transparent),
-      linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.55));
-    mix-blend-mode:screen;
-  }
-  .scan {
-    position:fixed; inset:0; z-index:2; pointer-events:none;
-    background-image: linear-gradient(rgba(255,255,255,0.01) 1px, rgba(0,0,0,0.99) 1px);
-    background-size:100% 4px; opacity:0.06; transform:translateZ(0);
-    animation: scan 6s linear infinite;
-  }
-  @keyframes scan { 0%{transform:translateY(-10%)}100%{transform:translateY(10%)} }
-
-  /* === Center stage === */
-  .stage{position:relative;z-index:3;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-  .card{
-    width:880px; max-width:98%; display:grid; grid-template-columns: 1fr 420px; gap:22px;
-    backdrop-filter: blur(6px); border-radius:14px; padding:18px;
+  .card {
+    width:100%; max-width:980px; border-radius:14px; padding:14px;
+    display:flex; gap:14px; align-items:stretch;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    box-shadow: 0 10px 60px rgba(2,6,23,0.65), inset 0 1px 0 rgba(255,255,255,0.02);
-    border: 1px solid rgba(124,92,255,0.06);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+    border:1px solid rgba(124,92,255,0.06);
+    flex-direction:row;
   }
 
-  /* Left: visual / 3D skull + title */
-  .visual{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;
-    border-radius:10px; background: linear-gradient(135deg, rgba(0,0,0,0.25), rgba(2,6,23,0.35));
-    min-height:320px;
+  /* small screens: stack */
+  @media (max-width:800px){
+    .card{flex-direction:column; padding:12px}
   }
-  .skull-wrap{width:220px;height:220px;display:flex;align-items:center;justify-content:center;transform-style:preserve-3d;perspective:900px}
-.skull-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh; /* or whatever your section height is */
-  perspective: 1000px; /* if you had 3D rotations */
-}
 
-#skullImg {
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 30px #00ffff);
-  transform-style: preserve-3d;
-  animation: float 4s ease-in-out infinite;
-}
+  /* visual column */
+  .visual {
+    flex:1; min-width:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    padding:14px; border-radius:10px; background:linear-gradient(135deg, rgba(124,92,255,0.03), rgba(0,212,255,0.02));
+  }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotateY(0deg); }
-  50% { transform: translateY(-15px) rotateY(15deg); }
-}
+  /* skull container (keeps 3D transform safe) */
+  .skull-wrap {
+    width:180px; height:180px; display:flex; align-items:center; justify-content:center;
+    perspective:900px; -webkit-perspective:900px;
+  }
 
+  .skull {
+    width:170px; height:170px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    transform-style:preserve-3d; -webkit-transform-style:preserve-3d;
+    animation:rotate 9s linear infinite;
+    background: linear-gradient(180deg, rgba(124,92,255,0.12), rgba(0,212,255,0.05));
+    box-shadow: 0 20px 50px rgba(2,6,23,0.6);
+    pointer-events:none; /* decorative */
+  }
+  @keyframes rotate { 0%{transform:rotateX(6deg) rotateY(0)}50%{transform:rotateX(6deg) rotateY(180deg)}100%{transform:rotateX(6deg) rotateY(360deg)} }
 
-  @keyframes rotate { 0%{transform:rotateX(6deg) rotateY(0deg)}50%{transform:rotateX(6deg) rotateY(180deg)}100%{transform:rotateX(6deg) rotateY(360deg)} }
+  /* make actual image centered and responsive */
+  .skull img { width:86%; height:86%; object-fit:contain; display:block; pointer-events:none; user-select:none; -webkit-user-drag:none; }
 
-  .title { font-weight:800;font-size:20px;letter-spacing:0.8px; text-transform:uppercase; color:#e6f3ff; display:flex;gap:10px; align-items:center}
-  .subtitle { color:rgba(230,242,255,0.8); font-size:12px; margin-top:4px }
+  .title { font-weight:800; font-size:16px; letter-spacing:0.6px; text-transform:uppercase; color:#e6f3ff; text-align:center }
+  .subtitle { color:rgba(230,242,255,0.8); font-size:12px; text-align:center }
 
-  /* Right: gate panel */
-  .panel{padding:18px;border-radius:10px;background:linear-gradient(180deg, rgba(0,0,0,0.22), rgba(2,6,23,0.3));min-height:320px;display:flex;flex-direction:column;justify-content:center;gap:12px}
-  .muted{color:rgba(230,238,248,0.65);font-size:13px}
+  /* gate panel */
+  .panel {
+    width:420px; max-width:46%; min-width:260px; padding:14px; border-radius:10px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(2,6,23,0.28));
+    display:flex; flex-direction:column; gap:12px; justify-content:center;
+  }
+
+  @media (max-width:800px){
+    .panel { max-width:100%; width:100%; min-width:unset; }
+    .visual { order: -1; } /* put visual above panel on phones */
+  }
+
+  .muted{color:rgba(230,238,248,0.68); font-size:13px}
+  label.small{font-size:13px;color:rgba(230,238,248,0.72)}
+
+  /* big tap-friendly input */
+  .input-row { display:flex; gap:10px; align-items:center; }
   input[type="password"]{
-    width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
-    background:rgba(255,255,255,0.02); color:inherit; outline:none; font-size:15px;
+    flex:1; padding:14px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
+    background:rgba(255,255,255,0.02); color:inherit; outline:none; font-size:16px;
+    -webkit-appearance:none;
   }
-  .row{display:flex;gap:10px;align-items:center}
+  input[type="password"]::placeholder { color:rgba(255,255,255,0.35); }
+
   button.btn{
-    padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:800;
-    background: linear-gradient(90deg,#7c5cff,#00d4ff); color:#041226;
+    padding:12px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:800;
+    background: linear-gradient(90deg,#7c5cff,#00d4ff);
+    color:#041226; min-width:86px;
   }
   .hint{color:#ffb4b4;font-size:13px; min-height:18px}
 
-  /* Protected area (hidden until auth) */
-  .protected{grid-column:1/-1;padding:18px;border-radius:10px;margin-top:6px;background:linear-gradient(90deg, rgba(0,0,0,0.18), rgba(2,6,23,0.28)); display:none; gap:12px}
-  .countdown{font-size:34px;font-weight:900;letter-spacing:1px}
-  .small{font-size:13px;color:rgba(230,238,248,0.8)}
+  /* protected area */
+  .protected { display:none; margin-top:12px; padding:12px; border-radius:10px; background:linear-gradient(90deg, rgba(0,0,0,0.12), rgba(2,6,23,0.2)); }
+  .countdown { font-size:26px; font-weight:900; letter-spacing:1px; margin-top:8px }
+  .small{font-size:13px;color:rgba(230,238,248,0.85) }
 
-  /* Glitch effect for headings */
-  .glitch{position:relative; font-weight:900; font-size:28px; color:#e6f3ff}
-  .glitch::before, .glitch::after{
-    content:attr(data-text); position:absolute; left:0; top:0; width:100%;
-    clip-path:rect(0,9999px,0,0);
-  }
-  .glitch::before{ animation:glitchTop 2.5s infinite linear; color:#7c5cff; mix-blend-mode:screen; }
-  .glitch::after{ animation:glitchBot 3s infinite linear; color:#00d4ff; mix-blend-mode:screen; }
-  @keyframes glitchTop{ 0%{clip-path:rect(0,9999px,0,0)}10%{clip-path:rect(0,9999px,40px,0)}20%{clip-path:rect(0,9999px,0,0)}30%{clip-path:rect(0,9999px,60px,0)}100%{clip-path:rect(0,9999px,0,0)} }
-  @keyframes glitchBot{ 0%{clip-path:rect(0,9999px,0,0)}15%{clip-path:rect(40px,9999px,9999px,0)}25%{clip-path:rect(0,9999px,0,0)}45%{clip-path:rect(60px,9999px,9999px,0)}100%{clip-path:rect(0,9999px,0,0)} }
+  /* make interactive elements above any decorative layers */
+  input, button, .panel { position:relative; z-index:3; }
 
-  /* tiny responsive */
-  @media (max-width:880px){
-    .card{grid-template-columns:1fr; padding:12px}
-    .skull-wrap{margin-bottom:6px}
-  }
+  /* helpful focus styles */
+  input:focus { box-shadow:0 6px 24px rgba(0,212,255,0.08); border-color:rgba(0,212,255,0.18); }
 
-  /* footer hint */
-  .footer-hint{margin-top:6px;font-size:12px;color:rgba(230,238,248,0.5)}
+  /* glitch heading */
+  .glitch { font-weight:900; font-size:18px; color:#e6f3ff }
+  .glitch::before, .glitch::after { content:attr(data-text); position:absolute; left:-9999px; } /* keep simple for mobile */
+
+  /* ensure body tap highlight less intrusive */
+  a, button { -webkit-tap-highlight-color: rgba(0,0,0,0); }
+
+  /* small footer */
+  .footer-hint { font-size:12px; color:rgba(230,238,248,0.52) }
+
 </style>
 </head>
 <body>
-  <!-- Matrix rain canvas -->
+  <!-- decorative matrix canvas (non-interactive) -->
   <canvas id="rain"></canvas>
   <div class="bg-overlay"></div>
   <div class="scan"></div>
 
-  <section class="stage" aria-live="polite">
+  <div class="wrap">
     <div class="card" role="region" aria-label="Cyber portal">
-      <!-- Visual left -->
-      <div class="visual" aria-hidden="false">
-        <div class="skull-wrap" aria-hidden="true">
-          <div class="skull" id="skull">
-            <!-- inline SVG skull (stylized) -->
-                          <div class="skull-container">
-  <img id="skullImg" src="skull.png" alt="Cyber Skull" />
-</div>
-            <svg viewBox="0 0 200 200" width="180" height="180" aria-hidden="true">
-              <defs>
-                <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0" stop-color="#7c5cff" stop-opacity="0.92"/>
-                  <stop offset="1" stop-color="#00d4ff" stop-opacity="0.86"/>
-                </linearGradient>
-                <filter id="f1" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur stdDeviation="2" result="b"/>
-                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-              </defs>
-            </svg>
+      <!-- visual -->
+      <div class="visual" aria-hidden="true">
+        <div class="skull-wrap">
+          <div class="skull" aria-hidden="true">
+            <!-- replace src with your data-uri or external image -->
+            <img id="skullImg" src="data:image/svg+xml;utf8,
+            %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E
+              %3Cdefs%3E%3ClinearGradient id='g1' x1='0' x2='1' y1='0' y2='1'%3E
+                %3Cstop offset='0' stop-color='%237c5cff' /%3E
+                %3Cstop offset='1' stop-color='%2300d4ff' /%3E
+              %3C/linearGradient%3E%3C/defs%3E
+              %3Cpath d='M100 18c-28 0-52 18-52 48 0 8 2 14 6 20 -8 8-10 18-10 28 0 10 6 20 18 28 8 6 18 8 30 8 12 0 22-2 30-8 12-8 18-18 18-28 0-10-2-20-10-28 4-6 6-12 6-20 0-30-24-48-52-48z' fill='url(%23g1)'/%3E
+              %3Ccircle cx='72' cy='82' r='10' fill='%23041226'/%3E
+              %3Ccircle cx='128' cy='82' r='10' fill='%23041226'/%3E
+              %3Crect x='64' y='112' width='72' height='12' rx='6' fill='%23041226'/%3E
+            %3C/svg%3E" alt="Skull" />
           </div>
         </div>
-        <div class="title" >
-          <span>☠️ CYBER PORTAL</span>
-        </div>
-        <div class="subtitle">Secure access • Confidential portal • Client-side gate</div>
+        <div class="title">☠️ CYBER PORTAL</div>
+        <div class="subtitle">Mobile-ready • client-side demo • tap to focus</div>
       </div>
 
-      <!-- Right: password panel -->
+      <!-- gate panel -->
       <div class="panel" id="gate" aria-labelledby="gateTitle">
         <div>
           <div class="glitch" data-text="SECURE ENTRY" id="gateTitle">SECURE ENTRY</div>
-          <div class="muted" style="margin-top:6px">Enter access key to reveal the portal.</div>
+          <div class="muted" style="margin-top:6px">Enter the access key to reveal the portal. (Client-side demo.)</div>
         </div>
 
-        <div style="margin-top:12px">
+        <div style="margin-top:10px">
           <label for="pw" class="small">Password</label>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <input id="pw" type="password" inputmode="text" autocomplete="off" aria-label="Password" placeholder="Enter access key" />
+          <div class="input-row" style="margin-top:8px;">
+            <input id="pw" type="password" inputmode="text" autocomplete="off" placeholder="Enter access key" aria-label="Password" />
             <button id="enter" class="btn" aria-label="Enter">Enter</button>
           </div>
-          <div class="hint" id="hint" role="status" aria-live="polite"></div>
+          <div class="hint" id="hint" aria-live="polite"></div>
         </div>
 
-        <div style="margin-top:8px" class="footer-hint">Tip: Press Enter to submit. The password is infront of you.</div>
+        <div class="footer-hint">Tip: On some phones, tapping near the field may be easier if keyboard doesn't appear. If still blocked, try tapping the input twice quickly.</div>
       </div>
 
-      <!-- Protected content (hidden until correct) -->
+      <!-- protected content -->
       <div class="protected" id="protected" aria-hidden="true">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
           <div>
             <div class="glitch" data-text="ACCESS GRANTED">ACCESS GRANTED</div>
-            <div class="small" style="margin-top:8px">Welcome. Countdown to the scheduled event:</div>
+            <div class="small" style="margin-top:8px">Countdown to the scheduled event:</div>
             <div class="countdown" id="countdown">--:--:--:--</div>
             <div class="muted" id="endText"></div>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
             <div style="display:flex;gap:8px;align-items:center">
-              <!-- small skull badges -->
-              <svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path fill="#7c5cff" d="M12 2c-3 0-5 2-5 5 0 1 0 2 1 3-2 .5-3 2-3 4 0 2 2 4 5 4h4c3 0 5-2 5-4 0-2-1-3-3-4 1-1 1-2 1-3 0-3-2-5-5-5z"/></svg>
-              <svg width="38" height="38" viewBox="0 0 24 24" aria-hidden="true"><path fill="#00d4ff" d="M12 2C8 2 6 4 6 7c0 1 1 2 1 3-2 1-3 2-3 4 0 3 3 6 8 6s8-3 8-6c0-2-1-3-3-4 0-1 1-2 1-3 0-3-2-5-5-5z"/></svg>
+              <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path fill="#7c5cff" d="M12 2c-3 0-5 2-5 5 0 1 0 2 1 3-2 .5-3 2-3 4 0 2 2 4 5 4h4c3 0 5-2 5-4 0-2-1-3-3-4 1-1 1-2 1-3 0-3-2-5-5-5z"/></svg>
+              <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path fill="#00d4ff" d="M12 2C8 2 6 4 6 7c0 1 1 2 1 3-2 1-3 2-3 4 0 3 3 6 8 6s8-3 8-6c0-2-1-3-3-4 0-1 1-2 1-3 0-3-2-5-5-5z"/></svg>
             </div>
-            <!-- <div class="small">Session stored locally (sessionStorage). Close the tab to clear.</div> -->
+            <div class="small">Session stored locally. Close the tab to clear.</div>
           </div>
         </div>
 
         <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px">
+          <div style="flex:1;min-width:180px">
             <div class="muted">Status</div>
             <div style="margin-top:6px">Portal state: <strong id="portalState">Open</strong></div>
           </div>
-          <div style="flex:1;min-width:220px">
+          <div style="flex:1;min-width:180px">
             <div class="muted">Action</div>
-            <div style="margin-top:6px"><button id="lockBtn" class="btn">Lock Portal</button></div>
+            <div style="margin-top:6px"><button id="lockBtn" class="btn">Lock</button></div>
           </div>
         </div>
 
       </div> <!-- protected -->
 
     </div> <!-- card -->
-  </section>
+  </div> <!-- wrap -->
 
 <script>
-/*
-  Single-file Cyber Portal
-  - Uses SHA-256 to compare password hash so the actual password string isn't plainly visible.
-  - PASSWORD_HASH is the SHA-256 hex of the real password (change to your own).
-  - For demo the password is "admin123".
-  IMPORTANT: Client-side protection is not truly secure. Use server auth for real secrets.
+/* MOBILE-FRIENDLY single-file portal
+   Password hash = SHA-256("access key")
+   Hash used below: 728577d2bb50dc730cae01a35a46967b9b13c86989284e0bf9bd348a620204dd
+   Target time: 2025-11-12 11:30 AM PST -> UTC 2025-11-12T19:30:00Z
 */
 
-const PASSWORD_HASH = "728577d2bb50dc730cae01a35a46967b9b13c86989284e0bf9bd348a620204dd"; // sha256("admin123")
-const targetUTC = new Date("2025-11-12T06:30:00Z"); // 12 Nov 2025 11:30 AM PST -> 19:30 UTC
+const PASSWORD_HASH = '728577d2bb50dc730cae01a35a46967b9b13c86989284e0bf9bd348a620204dd';
+const TARGET_UTC = new Date('2025-11-12T19:30:00Z');
 
-// DOM
 const pwInput = document.getElementById('pw');
 const enterBtn = document.getElementById('enter');
 const hint = document.getElementById('hint');
@@ -227,7 +214,7 @@ const endText = document.getElementById('endText');
 const portalState = document.getElementById('portalState');
 const lockBtn = document.getElementById('lockBtn');
 
-// helpers
+// SHA-256 helper
 function toHex(buffer){
   const b = new Uint8Array(buffer);
   return Array.from(b).map(x => x.toString(16).padStart(2,'0')).join('');
@@ -239,122 +226,133 @@ async function sha256hex(str){
   return toHex(digest);
 }
 
-// UI
-function showHint(msg, bad = true){
+function showHint(msg, ok=false){
   hint.textContent = msg;
-  hint.style.color = bad ? '#ff9b9b' : '#bfe6ff';
+  hint.style.color = ok ? '#bfe6ff' : '#ff9b9b';
 }
+
+// reveal / lock
 function revealPortal(){
-  gate.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-  gate.style.opacity = '0';
-  gate.style.transform = 'translateY(-20px) scale(0.98)';
-  setTimeout(()=>{ gate.style.display = 'none'; protectedArea.style.display='block'; protectedArea.style.opacity='0'; protectedArea.style.transform='translateY(6px)'; setTimeout(()=>{ protectedArea.style.transition='opacity 0.5s ease, transform 0.5s ease'; protectedArea.style.opacity=1; protectedArea.style.transform='translateY(0)'; },20); },500);
+  gate.style.display = 'none';
+  protectedArea.style.display = 'block';
   sessionStorage.setItem('portal_auth','1');
   portalState.textContent = 'Open';
 }
-
 function lockPortal(){
   sessionStorage.removeItem('portal_auth');
-  // show gate again
-  gate.style.display='block';
-  gate.style.opacity='1';
-  gate.style.transform='';
-  protectedArea.style.display='none';
-  pwInput.value='';
-  hint.textContent='';
+  gate.style.display = 'block';
+  protectedArea.style.display = 'none';
+  pwInput.value = '';
+  showHint('', true);
   portalState.textContent = 'Locked';
 }
 
-// password check
+// check password
 async function checkPassword(){
-  const val = pwInput.value || '';
-  if(!val.trim()){ showHint('Please enter a password'); return; }
-  showHint('Verifying…', false);
+  const v = (pwInput.value || '').trim();
+  if(!v){ showHint('Type the access key'); pwInput.focus(); return; }
+  showHint('Verifying…', true);
   try{
-    const h = await sha256hex(val.trim());
+    const h = await sha256hex(v);
     if(h === PASSWORD_HASH){
-      showHint('Access granted', false);
-      setTimeout(revealPortal, 300);
+      showHint('Access granted', true);
+      setTimeout(revealPortal, 250);
     } else {
-      showHint('Access denied — wrong key');
-      // shake input
-      pwInput.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:380});
+      showHint('Wrong key — try again');
+      pwInput.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:300});
+      pwInput.focus();
     }
-  }catch(e){
-    showHint('Error during verification');
+  } catch(e){
     console.error(e);
+    showHint('Verification error');
   }
 }
 
-// Enter key handling
-pwInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') checkPassword(); });
 enterBtn.addEventListener('click', checkPassword);
+pwInput.addEventListener('keydown', e => { if(e.key === 'Enter') checkPassword(); });
 lockBtn.addEventListener('click', lockPortal);
 
 // restore session
 if(sessionStorage.getItem('portal_auth') === '1'){
-  // reveal immediately
-  gate.style.display='none';
-  protectedArea.style.display='block';
+  revealPortal();
   portalState.textContent = 'Open';
+} else {
+  portalState.textContent = 'Locked';
 }
 
 // Countdown
 function updateCountdown(){
   const now = new Date();
-  let diff = Math.floor((targetUTC - now)/1000);
+  let diff = Math.floor((TARGET_UTC - now)/1000);
   if(diff <= 0){
     countdownEl.textContent = '00:00:00:00';
     endText.textContent = 'Countdown reached — welcome.';
     clearInterval(cdTimer);
     return;
   }
-  const days = Math.floor(diff / 86400); diff %= 86400;
-  const hrs = Math.floor(diff / 3600); diff %= 3600;
-  const mins = Math.floor(diff / 60); const secs = diff % 60;
+  const days = Math.floor(diff/86400); diff %= 86400;
+  const hrs = Math.floor(diff/3600); diff %= 3600;
+  const mins = Math.floor(diff/60); const secs = diff % 60;
   const fmt = n => String(n).padStart(2,'0');
   countdownEl.textContent = `${fmt(days)}:${fmt(hrs)}:${fmt(mins)}:${fmt(secs)}`;
 }
 updateCountdown();
 const cdTimer = setInterval(updateCountdown, 1000);
 
-/* === Matrix rain animation === */
+/* MATRIX RAIN (non-interactive) */
 (function(){
   const canvas = document.getElementById('rain');
   const ctx = canvas.getContext('2d');
-  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; initCols(); }
+  canvas.style.pointerEvents = 'none'; // critical: don't block touches
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; init(); }
   window.addEventListener('resize', resize);
-  let columns = [];
-  let fontSize = 16;
-  function initCols(){
+  let cols = [], fontSize = 16;
+  function init(){
     fontSize = Math.max(12, Math.floor(Math.min(innerWidth, innerHeight) / 64) * 2 + 12);
     ctx.font = fontSize + 'px monospace';
-    const cols = Math.floor(innerWidth / fontSize);
-    columns = new Array(cols).fill(0).map(_ => Math.floor(Math.random()*innerHeight/fontSize));
+    const count = Math.floor(innerWidth / fontSize);
+    cols = Array.from({length:count}, () => Math.floor(Math.random()*innerHeight/fontSize));
   }
-  const chars = 'ﾊﾐﾋｰｰｯｼﾘﾄｱｳｻﾝｲﾁﾆｻﾐﾑﾒﾗｶﾅ1234567890ABCDEF@#$%&*()[]<>';
-  function step(){
+  const chars = 'ﾊﾐﾋｰｰｯｼﾘﾄｱｳ1234567890ABCDEF@#$%&*()[]<>';
+  function frame(){
     ctx.fillStyle = 'rgba(0,0,0,0.12)';
     ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = 'rgba(0,220,255,0.08)';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    for(let i=0;i<columns.length;i++){
+    for(let i=0;i<cols.length;i++){
       const x = i * fontSize;
-      const y = columns[i] * fontSize;
-      const text = chars.charAt(Math.floor(Math.random()*chars.length));
-      ctx.fillStyle = i % 10 === 0 ? 'rgba(124,92,255,0.95)' : 'rgba(0,212,255,0.85)';
-      ctx.fillText(text, x, y);
-      if(y > canvas.height && Math.random() > 0.975) columns[i] = 0;
-      columns[i]++;
+      const y = cols[i] * fontSize;
+      const ch = chars.charAt(Math.floor(Math.random()*chars.length));
+      ctx.fillStyle = i%8===0 ? 'rgba(124,92,255,0.95)' : 'rgba(0,212,255,0.85)';
+      ctx.fillText(ch, x, y);
+      if(y > canvas.height && Math.random() > 0.975) cols[i] = 0;
+      cols[i]++;
     }
-    requestAnimationFrame(step);
+    requestAnimationFrame(frame);
   }
   resize();
-  step();
+  frame();
 })();
 
-/* tiny accessibility: focus input on load */
-window.addEventListener('load', ()=>{ setTimeout(()=>{ pwInput.focus(); }, 120); });
+/* PHONE FOCUS HELPERS
+   Some mobile browsers are picky when elements are inside transformed/animated parents.
+   We add an additional touchstart that attempts to focus the input if it's the target area.
+*/
+(function(){
+  const pw = pwInput;
+  // if user taps on the panel area, focus input (useful on some Android/iOS)
+  document.getElementById('gate').addEventListener('touchstart', (e)=>{
+    // if the element tapped is the input or a child of input, do nothing (native)
+    if(e.target === pw || pw.contains(e.target)) return;
+    // otherwise focus input after a tiny delay
+    setTimeout(()=>{ try{ pw.focus(); }catch{} }, 80);
+  }, { passive:true });
+
+  // Also focus when user taps the skull (visual) - small convenience
+  document.querySelector('.skull-wrap').addEventListener('touchstart', ()=>{ setTimeout(()=>{ pw.focus(); }, 80); }, { passive:true });
+})();
+
+// make sure input gets initial focus on load (but not on mobile auto-popup)
+window.addEventListener('load', ()=>{ setTimeout(()=>{ try{ if(!/Mobi|Android/i.test(navigator.userAgent)) pwInput.focus(); }catch{} }, 140); });
+
 </script>
 </body>
 </html>
